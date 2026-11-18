@@ -46,12 +46,12 @@ function startGame() {
   const input = createInput(canvas);
   let state = createWorld(freshSeed());
   let lastPhase = state.phase;
-  setStatus('Dusk Murmuration: tekan Enter atau klik untuk mulai.');
+  setStatus('Dusk Murmuration: press Enter or click to start.');
 
   function restart() {
     state = createWorld(freshSeed());
     state.phase = 'playing';
-    setStatus('Bermain: kumpulkan bintang, hindari awan badai.');
+    setStatus('Playing: gather light motes, dodge the storm clouds.');
   }
 
   function toggleMute() {
@@ -76,7 +76,7 @@ function startGame() {
     }
     if (state.phase === 'title') {
       state.phase = 'playing';
-      setStatus('Bermain: kumpulkan bintang, hindari awan badai.');
+      setStatus('Playing: gather light motes, dodge the storm clouds.');
     } else if (state.phase === 'paused') {
       state.phase = 'playing';
     } else if (state.phase === 'won' || state.phase === 'lost') {
@@ -100,7 +100,7 @@ function startGame() {
       updateAmbient(state, dt);
       if (wasPressed(input, 'Enter') || wasPressed(input, 'Space')) {
         state.phase = 'playing';
-        setStatus('Bermain: kumpulkan bintang, hindari awan badai.');
+        setStatus('Playing: gather light motes, dodge the storm clouds.');
       }
     } else if (state.phase === 'playing') {
       const dir = moveDirection(input);
@@ -112,7 +112,7 @@ function startGame() {
       updateWorld(state, steer, dt, audio);
       if (wasPressed(input, 'KeyP') || wasPressed(input, 'Escape')) {
         state.phase = 'paused';
-        setStatus('Jeda.');
+        setStatus('Paused.');
       }
     } else if (state.phase === 'paused') {
       if (wasPressed(input, 'KeyP') || wasPressed(input, 'Escape') || wasPressed(input, 'Enter')) {
@@ -123,8 +123,8 @@ function startGame() {
     }
 
     if (state.phase !== lastPhase) {
-      if (state.phase === 'won') setStatus(`Fajar tiba! Skor akhir ${state.score}.`);
-      if (state.phase === 'lost') setStatus(`Kawanan hilang. Skor ${state.score}. Tekan R untuk main lagi.`);
+      if (state.phase === 'won') setStatus(`Dawn breaks! Final score ${state.score}.`);
+      if (state.phase === 'lost') setStatus(`The flock is lost. Score ${state.score}. Press R to play again.`);
       lastPhase = state.phase;
     }
 

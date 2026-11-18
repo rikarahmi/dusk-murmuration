@@ -156,6 +156,26 @@ function drawClouds(ctx, state) {
     ctx.arc(c.x, cy - c.r * 0.28, c.r * 0.72, 0, Math.PI * 2);
     ctx.arc(c.x - c.r * 0.1, cy + 14, c.r * 0.7, 0, Math.PI * 2);
     ctx.fill();
+    // Texture: a warm rim along the lower edge (dusk light from the
+    // horizon) and two darker swirl arcs inside, so the cloud reads as
+    // weather rather than a smooth blob. Every offset comes from c.seed,
+    // so the texture is deterministic.
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,170,110,0.5)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(c.x, cy + 8, c.r * 0.72, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.stroke();
+    const sw = Math.sin(c.seed * 3.1) * 0.25;
+    ctx.strokeStyle = 'rgba(30,20,50,0.45)';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(c.x - c.r * 0.15, cy - c.r * 0.05, c.r * 0.45, Math.PI * (0.9 + sw), Math.PI * (1.9 + sw));
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(c.x + c.r * 0.2, cy + c.r * 0.12, c.r * 0.32, Math.PI * (1.1 - sw), Math.PI * (2.0 - sw));
+    ctx.stroke();
+    ctx.restore();
     // Lightning flickers inside the cloud when the flash is live.
     if (state.flash > 0) {
       const lx = c.x + Math.sin(c.seed * 7.3) * c.r * 0.4;
@@ -281,7 +301,7 @@ function drawWind(ctx, state) {
     ctx.fillStyle = '#ffd98a';
     ctx.font = `bold 26px ${UI_FONT}`;
     ctx.textAlign = 'center';
-    ctx.fillText(fromLeft ? '→ ANGIN!' : 'ANGIN! ←', x + (fromLeft ? 60 : -60), 120);
+    ctx.fillText(fromLeft ? '→ WIND!' : 'WIND! ←', x + (fromLeft ? 60 : -60), 120);
     ctx.restore();
   }
   if (wind.state === 'gust') {
@@ -310,14 +330,14 @@ function drawHud(ctx, state) {
   ctx.fillStyle = '#fff3d0';
   ctx.font = `bold 24px ${UI_FONT}`;
   ctx.textAlign = 'left';
-  ctx.fillText(`Skor ${state.score}`, 30, 37);
+  ctx.fillText(`Score ${state.score}`, 30, 37);
   // Birds.
   ctx.fillStyle = 'rgba(10,6,24,0.45)';
   roundRect(ctx, 238, 14, 120, 44, 10);
   ctx.fill();
   ctx.fillStyle = '#cfe0ff';
   ctx.font = `20px ${UI_FONT}`;
-  ctx.fillText(`Burung ${birdCount(state.flock)}`, 252, 37);
+  ctx.fillText(`Birds ${birdCount(state.flock)}`, 252, 37);
   // Combo badge.
   if (state.combo > 1) {
     ctx.fillStyle = '#ffb020';
@@ -327,10 +347,11 @@ function drawHud(ctx, state) {
     ctx.font = `bold 22px ${UI_FONT}`;
     ctx.fillText(`x${state.combo}`, 388, 37);
   }
-  // Night progress: dusk → dawn.
-  const barX = W / 2 - 170;
+  // Night progress: dusk → dawn. Kept clear of the combo badge (which ends
+  // at x=444) by centring a 320-wide bar: the moon glyph sits at x=458.
+  const barX = W / 2 - 160;
   const barY = 20;
-  const barW = 340;
+  const barW = 320;
   ctx.fillStyle = 'rgba(10,6,24,0.55)';
   roundRect(ctx, barX - 6, barY - 6, barW + 12, 40, 12);
   ctx.fill();
@@ -348,7 +369,7 @@ function drawHud(ctx, state) {
   ctx.fillText('☀', barX + barW + 22, barY + 15);
   ctx.fillStyle = 'rgba(255,243,208,0.9)';
   ctx.font = `13px ${UI_FONT}`;
-  ctx.fillText(state.nightT >= 1 ? 'Fajar!' : `Malam ${Math.floor(state.nightT * 100)}%`, barX + barW / 2, barY + 48);
+  ctx.fillText(state.nightT >= 1 ? 'Dawn!' : `Night ${Math.floor(state.nightT * 100)}%`, barX + barW / 2, barY + 48);
   // Mute button.
   ctx.fillStyle = state.muted ? 'rgba(255,176,32,0.85)' : 'rgba(10,6,24,0.45)';
   roundRect(ctx, MUTE_BUTTON.x, MUTE_BUTTON.y, MUTE_BUTTON.w, MUTE_BUTTON.h, 8);
@@ -388,17 +409,17 @@ function drawTitle(ctx, state) {
   ctx.fillText('MURMURATION', W / 2, 330);
   ctx.fillStyle = '#e8ddff';
   ctx.font = `22px ${UI_FONT}`;
-  ctx.fillText('Arahkan kawanan starling melintasi langit senja menuju fajar.', W / 2, 392);
+  ctx.fillText('Guide a starling flock across the dusk sky to dawn.', W / 2, 392);
   ctx.fillStyle = '#cbb8ff';
   ctx.font = `18px ${UI_FONT}`;
-  ctx.fillText('Mouse / panah / WASD — kumpulkan bintang cahaya, tambah burung.', W / 2, 428);
-  ctx.fillText('Hindari awan badai: sekali sentuh, 3 burung hilang dan kombo reset.', W / 2, 456);
-  ctx.fillText('P jeda · M suara · R mulai lagi', W / 2, 484);
+  ctx.fillText('Mouse / arrows / WASD — gather light motes, grow the flock.', W / 2, 428);
+  ctx.fillText('Dodge the storm clouds: one touch costs 3 birds and resets your combo.', W / 2, 456);
+  ctx.fillText('P pause · M mute · R restart', W / 2, 484);
   ctx.fillStyle = '#ffd98a';
   ctx.font = `bold 24px ${UI_FONT}`;
   const blink = 0.6 + 0.4 * Math.sin(state.time * 3);
   ctx.globalAlpha = blink;
-  ctx.fillText('Klik atau tekan Enter untuk mulai', W / 2, 534);
+  ctx.fillText('Click or press Enter to start', W / 2, 534);
   ctx.restore();
 }
 
@@ -409,10 +430,10 @@ function drawPaused(ctx) {
   ctx.textAlign = 'center';
   ctx.fillStyle = '#ffe9a8';
   ctx.font = `bold 44px ${TITLE_FONT}`;
-  ctx.fillText('Jeda', W / 2, H / 2 - 18);
+  ctx.fillText('Paused', W / 2, H / 2 - 18);
   ctx.fillStyle = '#e8ddff';
   ctx.font = `20px ${UI_FONT}`;
-  ctx.fillText('Tekan P atau klik untuk lanjut', W / 2, H / 2 + 34);
+  ctx.fillText('Press P or click to resume', W / 2, H / 2 + 34);
   ctx.restore();
 }
 
@@ -423,20 +444,20 @@ function drawWon(ctx, state) {
   ctx.textAlign = 'center';
   ctx.fillStyle = '#ffe9a8';
   ctx.font = `bold 64px ${TITLE_FONT}`;
-  ctx.fillText('FAJAR TIBA', W / 2, 224);
+  ctx.fillText('DAWN BREAKS', W / 2, 224);
   ctx.fillStyle = '#e8ddff';
   ctx.font = `22px ${UI_FONT}`;
-  ctx.fillText('Kawananmu bertahan sampai pagi. Langit cerah lagi.', W / 2, 272);
+  ctx.fillText('Your flock survived until dawn.', W / 2, 272);
   ctx.fillStyle = '#fff3d0';
   ctx.font = `bold 30px ${UI_FONT}`;
-  ctx.fillText(`Skor akhir  ${state.score}`, W / 2, 336);
+  ctx.fillText(`Final score  ${state.score}`, W / 2, 336);
   ctx.font = `22px ${UI_FONT}`;
   ctx.fillStyle = '#cfe0ff';
-  ctx.fillText(`Bintang terkumpul  ${state.motesCollected}   ·   Kombo terbaik  x${state.bestCombo}`, W / 2, 384);
-  ctx.fillText(`Burung tersisa  ${birdCount(state.flock)}   ·   Burung hilang  ${state.birdsLost}`, W / 2, 420);
+  ctx.fillText(`Motes gathered  ${state.motesCollected}   ·   Best combo  x${state.bestCombo}`, W / 2, 384);
+  ctx.fillText(`Birds left  ${birdCount(state.flock)}   ·   Birds lost  ${state.birdsLost}`, W / 2, 420);
   ctx.fillStyle = '#ffd98a';
   ctx.font = `bold 24px ${UI_FONT}`;
-  ctx.fillText('Tekan R atau klik untuk main lagi', W / 2, 500);
+  ctx.fillText('Press R or click to play again', W / 2, 500);
   ctx.restore();
 }
 
@@ -447,19 +468,19 @@ function drawLost(ctx, state) {
   ctx.textAlign = 'center';
   ctx.fillStyle = '#ff9a7a';
   ctx.font = `bold 60px ${TITLE_FONT}`;
-  ctx.fillText('KAWANAN HILANG', W / 2, 244);
+  ctx.fillText('THE FLOCK IS LOST', W / 2, 244);
   ctx.fillStyle = '#e8ddff';
   ctx.font = `22px ${UI_FONT}`;
-  ctx.fillText('Badai mengambil burung terakhir sebelum fajar.', W / 2, 292);
+  ctx.fillText('The storm took the last bird before dawn.', W / 2, 292);
   ctx.fillStyle = '#fff3d0';
   ctx.font = `bold 30px ${UI_FONT}`;
-  ctx.fillText(`Skor  ${state.score}`, W / 2, 356);
+  ctx.fillText(`Score  ${state.score}`, W / 2, 356);
   ctx.font = `22px ${UI_FONT}`;
   ctx.fillStyle = '#cfe0ff';
-  ctx.fillText(`Bintang terkumpul  ${state.motesCollected}   ·   Kombo terbaik  x${state.bestCombo}`, W / 2, 404);
+  ctx.fillText(`Motes gathered  ${state.motesCollected}   ·   Best combo  x${state.bestCombo}`, W / 2, 404);
   ctx.fillStyle = '#ffd98a';
   ctx.font = `bold 24px ${UI_FONT}`;
-  ctx.fillText('Tekan R atau klik untuk main lagi', W / 2, 480);
+  ctx.fillText('Press R or click to play again', W / 2, 480);
   ctx.restore();
 }
 
